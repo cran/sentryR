@@ -3,12 +3,6 @@
 #' @param calls function calls, e.g. from sys.calls()
 #'
 #' @return a data.frame
-#' @examples
-#' \dontrun{
-#' f <- function() stop("cabin pressure lost")
-#' f()
-#' sentryR:::calls_to_stacktrace(sys.calls())
-#' }
 calls_to_stacktrace <- function(calls) {
   srcrefs <- lapply(calls, function(call) attr(call, "srcref", exact = TRUE))
   srcfiles <- lapply(srcrefs, function(ref) {
@@ -30,13 +24,11 @@ calls_to_stacktrace <- function(calls) {
     }
   })
 
-  # calls to stop, h and internal calls to tryCatch etc are not
-  # informative in the stacktrace, so we remove them here
-  # similar to https://github.com/rstudio/shiny/blob/master/R/conditions.R#L399
-  to_keep <- !(funs %in% c(
-    "stop", ".handleSimpleError", "h",
-    "doTryCatch", "tryCatchList", "tryCatchOne"
-  ))
+  # drop calls to uninformative error handling internals, as in
+  # https://github.com/rstudio/shiny/blob/master/R/conditions.R#L399
+  to_keep <- !(funs %in%
+    c(".handleSimpleError", "h", "doTryCatch", "tryCatchList", "tryCatchOne")
+  )
 
   funs_to_keep <- funs[to_keep]
 

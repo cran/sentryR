@@ -44,7 +44,7 @@ default_error_handler <- function(req, res, error) {
 
   # Don't overly leak data unless the user opts-in
   if (getOption("plumber.debug", FALSE)) {
-    li["message"] <- as.character(error)
+    li["message"] <- gsub("\\n", "", as.character(error))
   }
 
   li
@@ -59,7 +59,8 @@ default_error_handler <- function(req, res, error) {
 #' @export
 wrap_error_handler_with_sentry <- function(error_handler = default_error_handler) {
   function(req, res, error, ...) {
-    if (!is.null(req$postBody) && length(req$postBody) > 0 && req$HTTP_CONTENT_TYPE == "application/json") {
+    http_content_type <- ifelse(is.null(req$HTTP_CONTENT_TYPE), "", req$HTTP_CONTENT_TYPE)
+    if (!is.null(req$postBody) && length(req$postBody) > 0 && grepl(pattern = "application/json", x = http_content_type, fixed = T) ) {
       req_body <- list(
         data = lapply(jsonlite::fromJSON(req$postBody), function(x) utils::head(x, 10))
       )
@@ -72,7 +73,7 @@ wrap_error_handler_with_sentry <- function(error_handler = default_error_handler
       query_string = req$QUERY_STRING,
       method = req$REQUEST_METHOD,
       headers = list(
-        `content-type` = req$HTTP_CONTENT_TYPE
+        `content-type` = http_content_type
       ),
       env = list(
         REMOTE_ADDR = ifelse(

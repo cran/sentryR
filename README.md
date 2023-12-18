@@ -1,21 +1,27 @@
-[![Travis build status](https://travis-ci.org/ozean12/sentryR.svg?branch=master)](https://travis-ci.org/ozean12/sentryR)
-[![Coverage status](https://codecov.io/gh/ozean12/sentryR/branch/master/graph/badge.svg)](https://codecov.io/github/ozean12/sentryR?branch=master)
+[![R-CMD-check](https://github.com/ozean12/sentryR/workflows/R-CMD-check/badge.svg)](https://github.com/jcpsantiago/sentryR/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/sentryR)](https://CRAN.R-project.org/package=sentryR)
-[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit/)
 
 # sentryR <img src="man/figures/logo.png" align="right" width="200px"/>
 
-`sentryR` is an unofficial R SDK for [Sentry](https://sentry.io).
+`sentryR` is an unofficial R client for [Sentry](https://sentry.io).
 It includes an error handler for Plumber for uncaught exceptions.
 
 ## Installation
-You can install the current development version of `sentryR` with:
+You can install the latest development version of `sentryR` with:
 
 ``` r
 # install.packages("remotes")
 remotes::install_github("ozean12/sentryR")
 ```
+
+or the stable version in CRAN with:
+
+```r
+install.packages("sentryR")
+```
+
 
 ## Using sentryR
 
@@ -99,7 +105,7 @@ packages <- as.list(versions)
 
 configure_sentry(dsn = Sys.getenv('SENTRY_DSN'), 
                  app_name = "myapp", app_version = "1.0.0",
-		 modules = packages)
+                 modules = packages)
 
 my_sentry_error_handler <- wrap_error_handler_with_sentry(my_error_handler)
 
@@ -120,6 +126,36 @@ api_error <- with_captured_calls(function(res, req){
 once this is done, Plumber will handle any errors, send them to Sentry using
 `capture_exception`, and respond with status `500` and the error message.
 You don't need to do any further configuration.
+
+## Example with Shiny
+
+You can also use `sentryR` to capture exceptions in your Shiny applications
+by providing a callback function to the `shiny.error` option.
+
+```r
+library(shiny)
+library(sentryR)
+
+configure_sentry(dsn = Sys.getenv('SENTRY_DSN'), 
+                 app_name = "myapp", app_version = "1.0.0",
+		 modules = packages)
+
+error_handler <- function() {
+    capture_exception(error = geterrmessage())
+}
+
+options(shiny.error = error_handler)
+
+shinyServer(function(input, output) {
+    # Define server logic
+    ...
+}
+```
+
+## TODO
+* test the error handling functions, needs mocking?
+* posting to sentry asynchronously
+* vignettes
 
 ## Acknowledgements
 
